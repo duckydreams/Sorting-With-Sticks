@@ -1,0 +1,228 @@
+import java.applet.Applet;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+/*
+/**
+ * Class that organizes the collection
+ * @author Shannon Brady
+ *
+
+*/
+
+
+/*This class is the SortableDataOrganizer class, which uses MouseListener and DataOrganizer
+ * It serves to use collections to sort the sticks randomly created in the program.
+ * Before anything is done, a new button from the Abutton class is named and created
+ * for use by the sorting implementation, x and y are named for coordinates, and
+ * since we are merging collections, a leftCollection and rightCollection have been
+ * named to hold the two halves of the collection to be merged.
+ */
+public class SortableDataOrganizer extends DataOrganizer implements MouseListener
+{
+	protected Abutton sorting;
+	protected int x, y;
+	protected DataCollection leftCollection, rightCollection;
+	//
+	//	C o n s t r u c t o r s
+	//	=======================
+	//
+	public SortableDataOrganizer()
+	{
+		super(); // calls super to implements the parent class of the DataOrganizer
+	}
+
+	public SortableDataOrganizer(Applet someApplet)
+	{
+		super(someApplet);  //creates the applet
+		y = 200; // y coordinate for the sorting button
+		x = 30;  // x coordinate for the sorting button
+		sorting = new Abutton("Sort", Color.orange, x, y); //creates the new sort button with the variable
+															//sorting
+	}
+/* For these classes, randomAction, maximumAction, minimumAction, removeAction,
+ * they do the same thing they do in data organizer, which is do find the min/max 
+ * randomly come up with the sticks, and will remove them. These just use
+ * super to call the previous classes in DataOrganizer.
+ * 
+ */
+	public void randomAction()
+	{
+		super.randomAction();
+	}
+
+	public void maximumAction()
+	{
+		super.maximumAction();
+	}
+
+	public void minimumAction()
+	{
+		super.minimumAction();
+	}
+
+	public void removeAction()
+	{
+		super.removeAction();
+	}
+/* mergeSort is the class that basically pulls the collection apart 
+ * through recursion and sorts them. 
+ * Here two separate data collections are created, and we use left and right to hold 
+ * the collections. First we reset the collection to the beginning in order to find the 
+ * correct size of the collection, this is important because we need to know how big the 
+ * collection is, in order to know if objects are still in it. 
+ * 
+ * In our return statement we basically put the collection "back together"
+ * by calling our merge class and passing it left and right, so it can create one
+ * complete collection.
+ */
+	protected DataCollection mergeSort(DataCollection someCollection)
+	{	
+		int size = 0;
+		someCollection.reset();
+		while(someCollection.hasNext()){
+			size++;
+			someCollection.next();
+		}
+		if(size <= 1){
+			System.out.println(size);
+			return someCollection;
+		}else{
+			System.out.println(size);
+
+			someCollection.reset();
+			DataCollection left = new ReferenceDataCollection(x,y);
+			DataCollection right = new ReferenceDataCollection(x,y);
+
+			for(int i = 0; someCollection.hasNext(); i++)
+			{
+				size++;
+				if(i % 2 == 0)
+					left.add((Item) someCollection.next());
+				else
+					right.add((Item) someCollection.next());
+			}
+
+			left = mergeSort(left);		    //	The 2 recursive "merge sort" steps,
+			right = mergeSort(right);		//		for left and right
+			return merge(left, right);
+		}
+
+	}
+/* merge is used to put the two collections back together. It's passed our two 
+ * Separate data collections left and right, that were created in the mergeSort class
+ * We make a new collection which will be our combined collection in the end
+ * it checks to see if left and right are empty, and then sets the opposite to the result.
+ * (ex: if left is null, then result = right)
+ * If neither are empty, then we start from the beginning of the left and right, and
+ * cast the parts of the collections as Items, so they can be handled correctly.
+ * (This is necessary for comparing the two items)
+ * The while statement is in effect as long as both collections have something in them it.
+ * the if statement checks to see if the left is bigger or smaller than the right, and will
+ * add the smaller item to the list (because we are using an ascending order, if 
+ * we wished to have a descending order, the inequality would simply need to be switched)
+ * 
+ * Then at the end we return the result, and call the reverse function. This function takes our
+ * list, which is currently in a descending order, and creates an ascending order. (Again this
+ * would be switched if the inequality in the if statement was switched)
+ * 
+ */
+	protected DataCollection merge(DataCollection left, DataCollection right)
+	{
+		// List to return
+		
+		DataCollection result = new ReferenceDataCollection();
+		if(left == null){
+			result = right;
+		}else if(right == null){
+			result = left;
+		}else{
+			left.reset();
+			right.reset();
+			Item leftItem = (Item)(left.next());
+			Item rightItem = (Item)(right.next());
+
+			while(leftItem != null && rightItem != null){
+
+				if(leftItem.getValue() < rightItem.getValue()){
+					result.add(leftItem);
+					leftItem = (Item) left.next();
+				}else{
+					result.add(rightItem);
+					rightItem = (Item) right.next();
+				}
+			}
+
+			if(leftItem == null){
+				while(rightItem != null){
+					result.add(rightItem);	
+					rightItem = (Item) right.next();
+				}
+			}else if(rightItem == null){
+				while(leftItem != null){
+					result.add(leftItem);	
+					leftItem = (Item) left.next();
+				}
+			}
+		}
+		return  reverse(result);
+	}
+/*checks to make sure that the sorting is completed, by printing a line to the console
+ * which tells the user that the sorting is complete. Calls super on the check function
+ * in DataOrganizer. It's pretty self explanitory. 
+ */
+
+	protected void check()
+	{
+		super.check();
+		if (sorting.isInside(lastX, lastY)) {
+			collection = mergeSort(collection);
+			System.out.println("sorting complete");
+			collection.reset();
+			while(collection.hasNext()){
+				System.out.println(((Item)(collection.next())).getValue());
+			}
+		}
+		theApplet.repaint();  // repaints the applet.
+	}
+/*Paints stuff. It's pretty self explanatory too. It makes sure sorting isn't null
+ * and it paints the sort button on. It uses super to call the paint method in 
+ * DataOrganizer, which paints all the rest of the stuff. 
+ * 
+ */
+	public void paint(Graphics pane)
+	{
+		super.paint(pane);
+		if (sorting != null)
+			sorting.paint(pane);
+	}
+/*Basically this reverses the collection so that it's in ascending order rather than descending
+ * order, as per the instructions on the assignment. It's called by the return statement 
+ * of merge, and returns a collection in proper ascending order. 
+ * 
+ */
+	DataCollection reverse(DataCollection collection){
+		DataCollection temp = new ReferenceDataCollection(x + 100, y);
+		collection.reset();
+		Item tempItem = (Item) collection.next();
+		while(tempItem != null){
+			temp.add(tempItem);
+			tempItem = (Item) collection.next();
+		}
+		return temp;
+		
+	}
+/*Flips things. Calls super, on the flip method in DataOrganizer, but adds functionality for
+ * the sort button. It flips things, then repaints the screen and thats pretty much it.
+ */
+	protected void flipWhenInside()
+	{
+		super.flipWhenInside();
+		if (sorting.isInside(lastX, lastY)){
+			sorting.flip();
+		}
+		theApplet.repaint();
+	}	
+}  //end of program. Bye. :)
+
