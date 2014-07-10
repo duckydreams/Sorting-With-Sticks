@@ -1,0 +1,259 @@
+mport java.awt.Graphics;
+
+/*
+ * For this class we are using references (nodes) to take the place of the array that was previously used. For this
+ * we need to implement the DataCollection class, use the same methods, but use different variables.
+ * 
+ */
+public class ReferenceDataCollection implements DataCollection{
+private Node head; // head of the list
+Node tail;  // tail of the list
+private Node selected;  // the node that is currently selected by the program (for use in the min max values)
+private int x;  // gives a location to the first bar in the lineup. 
+private int tempX;// used to make sure that x is never changed, so that the group of bars doesn't move to the right
+private int y;  // gives a y value to the location of the bars
+/*
+ * This is one of two constructors used by this class. It is purposely left empty. All the relevant data is in the 
+ * next constructor.
+ */
+	public ReferenceDataCollection()
+	{
+
+	}
+	/*
+	 * The second of two constructors, which is passed an X and Y value. This isn't at all altered from the 
+	 * array based implimentation, and is exactly the same
+	 */
+	public ReferenceDataCollection(int someX, int someY){
+		this();
+		x = someX;
+		tempX = x;
+		y = someY;
+	}
+	/*
+	 *Resets the selected value to the first one in the list (the head) so that it can be changed again. Used
+	 *to be called in other methods
+	 *
+	 */
+	public void reset() {
+		selected = head;
+		
+	}
+
+	/*
+	 * This is the second of the two reset methods, and will reset the selected variable. An if/else statement
+	 * is used to accomplish this. The if statement checks to see if there is an Item being passed,
+	 * if there is no item, there is nothing to select for and therefore selected is null.
+	 * The else statement assumes there is a someItem being passed, and uses the temp variable nodeTemp
+	 * to hold the variable, and alter it.  This is used to define the selected variable, by looping the 
+	 * linked list, till it reaches the nodeTemp (which the program will kick out, when the nodeTemp item
+	 * is equal to the someItem passed to the reset button.
+	 * 
+	 *In the end the nodeTemp value is used to reset the selected value.
+	 */
+	public void reset(Item someItem) {
+		
+	if(someItem == null)
+		selected = null;
+	else
+	{
+		
+		int counter = 1;
+		Node nodeTemp = head;	
+		if(head != null)
+		{
+			while(nodeTemp.getItem() != someItem){
+				nodeTemp = nodeTemp.next;
+				counter++;
+				}
+				System.out.println(counter);
+				selected = nodeTemp;
+			}		
+		}
+	}
+	
+/*
+ * This method serves to add items to the linked list. It sets a location, and uses the tempNode variable
+ * and uses an if/else statement. 
+ * If no head is present (nothing has been added to the list) then the item passed through the add statement
+ * becomes both the head and the tail.
+ * The else statement handles the add function if 1 or more values is in the list. Since the last value in is 
+ * automatically the tail, all the else statement does is set the new value to become the tail, by taking the 
+ * current tail, calling next, and defining that temporary variable (which is the item passed) to be the new
+ * value for tail.
+ * 
+ * In this way we can make sure that the links always remain pointing at the right node, and we can add to the end
+ * of the line, by setting a new tail with the value passed (held in tempNode) to be the new tail. 
+ */
+	
+	public void add(Item someItem) {
+		
+		someItem.setLocation(tempX, y);
+		tempX += Item.OVERALL_WIDTH;
+		 Node tempNode = new Node (someItem);
+		if (head == null){
+			
+			head = tempNode;
+			tail = tempNode;
+		}
+		else{
+			
+			tail.setNext(tempNode);
+			tail = tempNode;
+		}
+			
+	}
+
+	/*
+	 * The paint method does the painting but also sets up the highlighting, which in the previous program was
+	 * done by the changeSelected method. However I chose to do it all here. 
+	 * First the program determines if there is anything to paint, and it makes sure that there is a value
+	 * that is selected for. Then it will check to see if the item passed through the variable nodeTemp is equal
+	 * to selected, and if so it will highlight the value. If the values are not equal the bar will not be highlighted
+	 * This is achieved through a while loop, which starts at the head and increments one by one for the length
+	 * of the linked list.
+	 * Once it's determined what is selected, and highlighted, the paint method "paints the board" for the user.
+	 */
+	public void paint(Graphics pane) {
+		
+		if (head != null){
+			 Node nodeTemp = head;
+			while(nodeTemp != null){
+				
+				if(nodeTemp == selected){
+					System.out.println("something is selected");
+					nodeTemp.getItem().highlight(true);
+				}
+				else{
+					nodeTemp.getItem().highlight(false);
+				}
+				nodeTemp.getItem().paint(pane);
+				nodeTemp = nodeTemp.getNext();
+			}
+		}
+	}
+
+/*
+ * Basically this method determines if the selected item exists, and if it's followed
+ * by something else. If selected is null (doesn't exist) then it will return false,
+ * if there is anything in selected, then it returns true.
+ */
+	public boolean hasNext() {
+		if(selected == null){
+			return false;
+		}
+		else{
+			return true;
+		}
+	}
+	/*
+	 * Next uses the variable tempSelected to hold the new value of selected. It returns
+	 * the current version of selected, and sets the new value of selected (which why the
+	 * temporary value comes in handy!)
+	 * First it checks to make sure selected isn't null. There is nothing to return if there is nothing
+	 * there. If selected has a value, it is set equal to tempSelected. selected calls the getNext() method
+	 * to send it the next item for selected.
+	 * tempSelected and the item it holds is returned, because the method returns the current version of the 
+	 * selected value.
+	 */
+
+	public Object next() {
+		Node tempSelected;
+		if (selected == null){
+			return null;
+		}
+		else{
+			tempSelected = selected;
+			selected = selected.getNext();
+			return tempSelected.getItem();
+		}
+	}	
+/*
+ *The remove method removes the selected items if the user prompts the program to do so. This is important 
+ *and is situation dependent, because when removing you have to make sure the item that pointed at the node
+ *being removed, is now pointing at the node that removed item was. 
+ *Therefore we use an if, else if, and else statement to handle these three situations
+ *if there is no head, and nothing selected, nothing happens.
+ *If the head is selected for, then the value after head (taken by the getNext() method) will be defined as
+ *the new head of the linked list.
+ *If it's the tail, a while loop is used to determine the value right before the tail, and looks for the value
+ *right before the tail by searching for the tail as the "next" value in the line. That simply becomes the tail
+ *and the value that was tail becomes null. (it still exists but is referenced by nothing)
+ *
+ *The third value is for when it's a random value in the middle. Then we use a while loop to find the value
+ *before selected, and then connect it to selected.getNext() so that it connects to the value after
+ *selected, and sets selected = null and calls the reset method.
+ * This method also repaints and moves the bars over once one is removed. This is where the tempX comes in, 
+ * to make sure that the original x value isn't altered, so that the original bar in the value is always in the
+ * same value. It's important to make sure that the bar doesn't keep defining x as the value of where selected
+ * is in the program. 
+ */
+	public void remove() {
+		Node nodeTemp = head;
+		if(selected == null || head == null){
+			
+		}
+		else if(selected == head){
+			 head = head.getNext();
+
+		}
+		else if(selected == tail){
+			while(nodeTemp.next != tail){
+				nodeTemp = nodeTemp.getNext();
+			}
+			tail = nodeTemp;
+			tail.next = null;
+			
+		}
+		else{
+			while(nodeTemp.next != selected){
+					nodeTemp = nodeTemp.getNext();
+			}
+			nodeTemp.next = selected.getNext();
+		}
+		reset(); // set select to head
+		tempX = x; // reset the starting position of my collection
+		while(selected != null){
+			selected.getItem().setLocation(tempX, y);
+			tempX += Item.OVERALL_WIDTH;
+			selected = selected.getNext();
+		}
+		selected = null;
+		
+	}
+/*
+ * This is our class within a class, that defines node. It defines the item, and next that are used to pass
+ * values for what our item is, and the next item in the array. To avoid all methods and classes being able
+ * to access these values, item and next are private and are accessed through getter and setter methods each.
+ * the setItem, sets item = someItem (which is what is passed to all the methods in the classes, likewise, next
+ * is set as nextNode, which isn't very much used in this class the getNext() is heavily used as an alternative
+ * to passing next directly. 
+ * getItem returns item, and getNext returns next.
+ * These methods are used in place of using item and next directly, which is simply good programming practice.
+ */
+	
+	private class Node{
+		private Item item;
+		private Node next;
+		public Node(Item item)
+			
+		{
+			this.item = item;
+		}
+		
+		private Item getItem(){
+			return item;
+		}
+		private Node getNext(){
+			return next;
+		}
+		
+		private void setItem(Item someItem){
+			item = someItem;
+		}
+		
+		private void setNext(Node someNode){
+			next = someNode;
+		}
+	}
+}
